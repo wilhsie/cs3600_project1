@@ -95,25 +95,22 @@ int main(int argc, char*argv[]) {
 char **separate(char *input){
   char **args = (char **) malloc(100 * sizeof(char *));
   char *temp = (char *) malloc(100 * sizeof(char));
+  *temp = 0;
   int argcount = 0;
   int tempcount = 0;
   for(int i = 0; i < ((int)strlen(input)); i++){
-    // If space, skip
-    if(input[i] == ' '){
+    // Get rid of leading spaces
+    while(input[i] == ' '){
+      i++;
+    }
+    // If we reach the end of an argument
+    if(input[i] == ' ' && strlen(temp) != 0){
       args[argcount] = temp;
       free(temp);
       temp = (char *) malloc(100 * sizeof(char));
       argcount++;
       tempcount = 0;
     }
-    // If \ character is found, properly handle it (DON'T THINK WE NEED TO WORRY ABOUT THIS FOR THE MILESTONE, SO I COMMENTED IT OUT)
-    /**    else if(input[i] == '\\'){
-      char d = getchar();
-      if(d == 't'){
-      temp[tempcount] = '';
-        tempcount++;
-      }
-      }**/
     // If normal character, add to temporary string
     else{
       temp[tempcount] = input[i];

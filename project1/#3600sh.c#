@@ -74,7 +74,7 @@ int main(int argc, char*argv[]) {
     pid = fork();
     if (pid < 0){
       fprintf(stderr, "Fork Failed");
-      return 1;
+    x  return 1;
     }
     else if(pid == 0){
       execvp(separated[0], separated);
@@ -95,12 +95,16 @@ int main(int argc, char*argv[]) {
 char **separate(char *input){
   char **args = (char **) malloc(100 * sizeof(char *));
   char *temp = (char *) malloc(100 * sizeof(char));
-  *temp = "";
+  *temp = 0;
   int argcount = 0;
   int tempcount = 0;
   for(int i = 0; i < ((int)strlen(input)); i++){
-    // If space, skip
-    if(input[i] == ' ' && temp != ""){
+    // Get rid of leading spaces
+    while(input[i] == ' '){
+      i++;
+    }
+    // If we reach the end of an argument
+    if(input[i] == ' ' && strlen(temp) != 0){
       args[argcount] = temp;
       free(temp);
       temp = (char *) malloc(100 * sizeof(char));
