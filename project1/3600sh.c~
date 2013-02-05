@@ -95,26 +95,30 @@ int main(int argc, char*argv[]) {
 char **separate(char *input){
   char **args = (char **) malloc(100 * sizeof(char *));
   char *temp = (char *) malloc(100 * sizeof(char));
-  *temp = "";
+  *temp = 0;
   int argcount = 0;
   int tempcount = 0;
+
   for(int i = 0; i < ((int)strlen(input)); i++){
-    // If space, skip
-    if(input[i] == ' ' && temp != ""){
-      args[argcount] = temp;
-      free(temp);
-      temp = (char *) malloc(100 * sizeof(char));
-      argcount++;
-      tempcount = 0;
+    // Get rid of leading spaces
+    while(input[i] == ' '){
+      i++;
+      if(strlen(temp) != 0){
+	strcat(temp, "\0");
+	strcpy(args[argcount], temp);
+	argcount++;
+	free(temp);
+	temp = (char *) malloc(100 * sizeof(char));
+	tempcount = 0;
+      }	
     }
-    // If normal character, add to temporary string
-    else{
+    // If we hit an argument then store it in temp
+    if(input[i] != ' '){
       temp[tempcount] = input[i];
       tempcount++;
     }
-    // Add the temporary string to the args char **
-    args[argcount] = temp;
   }
+  strcpy(args[argcount], temp);
   free(temp);
   return args;
 }

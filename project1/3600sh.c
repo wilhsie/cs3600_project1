@@ -15,6 +15,7 @@
 #define USE(x) (x) = (x)
 
 char **separate(char *input);
+//void forking();
 
 int main(int argc, char*argv[]) {
   // Code which sets stdout to be unbuffered
@@ -29,14 +30,15 @@ int main(int argc, char*argv[]) {
   char hostname[1024];
   hostname[1023] = '\0';
   gethostname(hostname, 1023);
+  char d;
 
   // Used during fork:
   pid_t pid;
-  
+  printf("%s@%s:%s> ", user, hostname, pwd);
   // Main loop that reads a command and executes it
   while (1) {
     // You should issue the prompt here
-    printf("%s@%s:%s>", user, hostname, pwd);
+    //   printf("%s@%s:%s>", user, hostname, pwd);
 
     // Variables for character reading
     int allocation_size = 32;
@@ -49,6 +51,23 @@ int main(int argc, char*argv[]) {
     // Read input
     while(((input_chari = getchar()) != EOF) && (input_chari != 0) && (input_chari != '\n')){
       input_charc = (char)(input_chari);
+
+      // Handle escape characters
+      if(input_charc == '\\'){
+        if((d = getchar()) == 't'){
+          input_charc = '\t';
+        }else if(d == '\\'){
+          input_charc = '\\';
+        }else if(d == ' '){
+          input_charc = ' ';
+        }else if(d == '&'){
+          input_charc = '&';
+        }
+        else{
+          printf("Error: Unrecognized escape sequence.");
+        }
+      }
+
       // Increase memory buffer if we anticipate overflow
       if(count > allocation_size){
 	allocation_size = allocation_size * 2;
@@ -59,6 +78,7 @@ int main(int argc, char*argv[]) {
     }
 
     // Check to see if exit command has been input
+
     if(strcmp(input_string, "exit") == 0){
       free(input_string);
       free(separated);
@@ -68,9 +88,9 @@ int main(int argc, char*argv[]) {
     input_string[count++] = '\0';
 
     separated = separate(input_string);
-    
-    printf("%s\n", separated[0]);
-
+    //forking();
+    //printf("%s\n", separated[0]);
+    //printf("%s\n", separated[1]);
     pid = fork();
     if (pid < 0){
       fprintf(stderr, "Fork Failed");
@@ -78,54 +98,62 @@ int main(int argc, char*argv[]) {
     }
     else if(pid == 0){
       execvp(separated[0], separated);
-      printf("Child in Progress\n");
+      //printf("Child in Progress\n");
       exit(0);
     }
     else{
       wait(NULL);
-      printf("Child Complete\n");
+      //printf("Child Complete\n");
     }
-	
-  }
-  
+
+    if(input_chari == EOF){
+      do_exit(); 
+    }
+
+    printf("%s@%s:%s>", user, hostname, pwd);
+  }  
   return 0;
 }
 
 // Function that separates the input string into multiple words
 char **separate(char *input){
   char **args = (char **) malloc(100 * sizeof(char *));
-  char *temp = (char *) malloc(100 * sizeof(char));
-  *temp = 0;
+  char temp[2];
+  temp[0] = '\0';
   int argcount = 0;
-  int tempcount = 0;
-  for(int i = 0; i < ((int)strlen(input)); i++){
-    // Get rid of leading spaces
+  args[0] = (char *) malloc(32 * sizeof(char));
+  for(signed int i = 0; i < ((int)strlen(input)); i++){
     while(input[i] == ' '){
       i++;
+      if(strlen(temp) != 0){
+	argcount++;
+	args[argcount] = (char *) malloc(32 * sizeof(char));
+	temp[0] = '\0';
+      }
     }
-    // If we reach the end of an argument
-    if(input[i] == ' ' && strlen(temp) != 0){
-      args[argcount] = temp;
-      free(temp);
-      temp = (char *) malloc(100 * sizeof(char));
-      argcount++;
-      tempcount = 0;
+    if(input[i] != ' '){
+      temp[0] = input[i];
+      temp[1] = '\0';
+      strcat(args[argcount], temp);    
     }
-    // If normal character, add to temporary string
     else{
-      temp[tempcount] = input[i];
-      tempcount++;
+      argcount++;
+      args[argcount] = (char *) malloc(100 * sizeof(char *));
+      args[argcount] = '\0';
     }
-    // Add the temporary string to the args char **
-    args[argcount] = temp;
+
   }
-  free(temp);
   return args;
 }
 
+/*
+void increase_buffer(unsigned int allocation_size, datatype, datatype data){
+  allocation_size = allocation_size * 2;
+  return realloc(data, (allocation_size * sizeof(datatype)));
+  how do we return a buffer, and how do we pass in a datatype
+*/  
 
 // Function which exits, printing the necessary message
-//
 void do_exit() {
   printf("So long and thanks for all the fish!\n");
   exit(0);
