@@ -124,11 +124,19 @@ char **separate(char *input){
   args[0] = (char *) malloc(32 * sizeof(char));
   for(signed int i = 0; i < ((int)strlen(input)); i++){
     while(input[i] == ' '){
-      i++;
-      if(strlen(temp) != 0){
+      if((i + 1) < (int)strlen(input)){
+	i++;
+	if(strlen(temp) != 0){
+	  argcount++;
+	  args[argcount] = (char *) malloc(32 * sizeof(char));
+	  temp[0] = '\0';
+	}
+      }
+      else{
 	argcount++;
-	args[argcount] = (char *) malloc(32 * sizeof(char));
-	temp[0] = '\0';
+	args[argcount] = (char *) malloc(100 * sizeof(char *));
+	args[argcount] = '\0';
+	break;
       }
     }
     if(input[i] != ' '){
@@ -136,12 +144,6 @@ char **separate(char *input){
       temp[1] = '\0';
       strcat(args[argcount], temp);    
     }
-    else{
-      argcount++;
-      args[argcount] = (char *) malloc(100 * sizeof(char *));
-      args[argcount] = '\0';
-    }
-
   }
   return args;
 }
