@@ -99,14 +99,14 @@ int main(int argc, char*argv[]) {
     while(separated[i] != '\0'){
       if((char)separated[i][0] == '>'){
 	output_flag = 1;
+	separated[i] = '\0';
 	if(separated[i+1] != '\0'){
 	  output = separated[i+1];
 	}else{
 	  printf("Error: Invalid syntax.\n");
 	  do_exit();
 	}
-      }
-      if((char)separated[i][0] == '<'){
+      }else if((char)separated[i][0] == '<'){
 	input_flag = 1;
 	separated[i] = '\0';
 	if(separated[i+1] != '\0'){
