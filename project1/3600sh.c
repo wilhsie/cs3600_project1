@@ -52,6 +52,9 @@ int main(int argc, char*argv[]) {
     int output_flag = 0;
     char *input = (char *) malloc (32 * sizeof(char));
     char *output = (char *) malloc (32 * sizeof(char));
+    char *errput = (char *) malloc (32 * sizeof(char));
+    int err_flag = 0;
+
     
     // Read input
     while(((input_chari = getchar()) != EOF) && (input_chari != 0) && (input_chari != '\n')){
@@ -99,7 +102,27 @@ int main(int argc, char*argv[]) {
 	count++;
 	input_string[count] = ' ';
 	count++;
-      }else{
+      }
+      else if(input_charc == '2'&& (d = getchar()) == '>'){
+	if(count+3 > allocation_size){
+	  allocation_size = allocation_size * 2;
+	  input_string = realloc(input_string, (allocation_size * sizeof(char)));
+	}
+	input_string[count] = ' ';
+	count++;
+	input_string[count] = '2';
+	count++;
+	input_string[count] = '>';
+	count++;
+	input_string[count] = ' ';
+	count++;
+      }
+      else{
+	// Increase memory buffer if we anticipate overflow
+	if(count > allocation_size){
+	  allocation_size = allocation_size * 2;
+	  input_string = realloc(input_string, (allocation_size * sizeof(char)));
+	}
 	input_string[count] = input_charc;
 	count++;
       }
@@ -110,6 +133,9 @@ int main(int argc, char*argv[]) {
     if(strcmp(input_string, "exit") == 0){
       free(input_string);
       free(separated);
+      free(input);
+      free(output);
+      free(errput);
       do_exit();
     }
     
@@ -138,11 +164,19 @@ int main(int argc, char*argv[]) {
 	  printf("Error: Invalid syntax.\n");
 	  do_exit();
 	}
+      }else if(strcmp(separated[i], "2>") == 0){
+	err_flag = 1;
+	separated[i] = '\0';
+	if(separated[i+1] != '\0'){
+	  errput = separated[i+1];
+	}else{
+	  printf("Error: Invalid syntax.\n");
+	}
       }
       i++;
     }
 
-    int fds[2];
+    int fds[3];
 
     //forking();
     //printf("%s\n", separated[0]);
@@ -176,6 +210,18 @@ int main(int argc, char*argv[]) {
 	  do_exit();
 	}
 	close(fds[1]);
+      }
+      if(err_flag){
+	fds[2] = open(errput, O_WRONLY | O_TRUNC | O_CREAT, 0644);
+	if(fds[2] == -1){
+	  printf("Error: Unable to open redirection file.\n");
+	  do_exit();
+	}
+	if(dup2(fds[2], 2) != 2){
+	  printf("Error: Dup2 broke on stderr.\n");
+	  do_exit();
+	}
+	close(fds[2]);
       }
 
       execvp(separated[0], separated);
