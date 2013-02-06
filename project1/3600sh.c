@@ -72,14 +72,37 @@ int main(int argc, char*argv[]) {
           printf("Error: Unrecognized escape sequence.");
         }
       }
-      
-      // Increase memory buffer if we anticipate overflow
-      if(count > allocation_size){
-	allocation_size = allocation_size * 2;
-	input_string = realloc(input_string, (allocation_size * sizeof(char)));
+
+      // adhoc handle angle brackets for i/o redirection
+      if(input_charc == '>'){
+	// Increase memory buffer if we anticipate overflow
+	if(count+2 > allocation_size){
+	  allocation_size = allocation_size * 2;
+	  input_string = realloc(input_string, (allocation_size * sizeof(char)));
+	}
+	input_string[count] = ' ';
+	count++;
+	input_string[count] = '>';
+	count++;
+	input_string[count] = ' ';
+	count++;
       }
-      input_string[count] = input_charc;
-      count++;
+      else if(input_charc == '<'){
+	// Increase memory buffer if we anticipate overflow
+	if(count+2 > allocation_size){
+	  allocation_size = allocation_size * 2;
+	  input_string = realloc(input_string, (allocation_size * sizeof(char)));
+	}
+	input_string[count] = ' ';
+	count++;
+	input_string[count] = '<';
+	count++;
+	input_string[count] = ' ';
+	count++;
+      }else{
+	input_string[count] = input_charc;
+	count++;
+      }
     }
 
     // Check to see if exit command has been input
