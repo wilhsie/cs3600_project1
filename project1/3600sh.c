@@ -15,15 +15,16 @@
 #define USE(x) (x) = (x)
 
 char **separate(char *input);
-//void forking();
 
+int numargs = 0;
+int ampersandflag = 0;
 int main(int argc, char*argv[]) {
   // Code which sets stdout to be unbuffered
   // This is necessary for testing; do not change these lines
   USE(argc);
   USE(argv);
   setvbuf(stdout, NULL, _IONBF, 0); 
-
+  
   // Variables for printing the prompt
   char *user = getenv("USER");
   char *pwd = getenv("PWD");
@@ -55,7 +56,7 @@ int main(int argc, char*argv[]) {
     // Read input
     while(((input_chari = getchar()) != EOF) && (input_chari != 0) && (input_chari != '\n')){
       input_charc = (char)(input_chari);
-
+      
       // Handle escape characters
       if(input_charc == '\\'){
         if((d = getchar()) == 't'){
@@ -70,8 +71,8 @@ int main(int argc, char*argv[]) {
         else{
           printf("Error: Unrecognized escape sequence.");
         }
-      }	
-
+      }
+      
       // Increase memory buffer if we anticipate overflow
       if(count > allocation_size){
 	allocation_size = allocation_size * 2;
@@ -80,7 +81,7 @@ int main(int argc, char*argv[]) {
       input_string[count] = input_charc;
       count++;
     }
-    
+
     // Check to see if exit command has been input
 
     if(strcmp(input_string, "exit") == 0){
@@ -92,7 +93,8 @@ int main(int argc, char*argv[]) {
     input_string[count++] = '\0';
 
     separated = separate(input_string);
-    
+      
+    // Check the separated string for '<' and '>' characters
     int i = 0;
     while(separated[i] != '\0'){
       if((char)separated[i][0] == '>'){
@@ -105,7 +107,7 @@ int main(int argc, char*argv[]) {
       }
       i++;
     }
-    
+      
     //forking();
     //printf("%s\n", separated[0]);
     //printf("%s\n", separated[1]);
@@ -125,22 +127,24 @@ int main(int argc, char*argv[]) {
 	dup2(fd1, 1);
 	close(fd1);
       }
-      
+ 
       execvp(separated[0], separated);
       //printf("Child in Progress\n");
       exit(0);
     }
     else{
-      wait(NULL);
+      if(strcmp(separated[numargs], "&")){
+        wait(NULL);
+      }
       //printf("Child Complete\n");
     }
-    
+
     if(input_chari == EOF){
       do_exit(); 
     }
 
-    printf("%s@%s:%s>", user, hostname, pwd); 
-  }
+    printf("%s@%s:%s> ", user, hostname, pwd);
+  }  
   return 0;
 }
 
@@ -156,6 +160,10 @@ char **separate(char *input){
     while(input[i] == ' '){
       i++;
       if(input[i] != 0 && (char)input[i] != ' ' && strlen(args[0]) > 0){
+        if(ampersandflag == 1){
+          printf("Error: Invalid syntax.\n");
+          do_exit();
+        }
 	argcount++;
 	args[argcount] = (char *) malloc(32 * sizeof(char));
 	temp[0] = '\0';
@@ -169,7 +177,11 @@ char **separate(char *input){
       temp[0] = '\0';
       temp[1] = '\0';
     }    
+    if (input[i] == '&'){
+      ampersandflag = 1;
+    }
   }
+  numargs = argcount;
   return args;
 }
 
