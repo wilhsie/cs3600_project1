@@ -47,6 +47,10 @@ int main(int argc, char*argv[]) {
     int input_chari = 0;
     char input_charc = ' ';
     int count = 0;
+    int input_flag = 0;
+    int output_flag = 0;
+    char *input;
+    char *output;
     
     // Read input
     while(((input_chari = getchar()) != EOF) && (input_chari != 0) && (input_chari != '\n')){
@@ -66,7 +70,7 @@ int main(int argc, char*argv[]) {
         else{
           printf("Error: Unrecognized escape sequence.");
         }
-      }
+      }	
 
       // Increase memory buffer if we anticipate overflow
       if(count > allocation_size){
@@ -76,7 +80,7 @@ int main(int argc, char*argv[]) {
       input_string[count] = input_charc;
       count++;
     }
-
+    
     // Check to see if exit command has been input
 
     if(strcmp(input_string, "exit") == 0){
@@ -88,6 +92,20 @@ int main(int argc, char*argv[]) {
     input_string[count++] = '\0';
 
     separated = separate(input_string);
+    
+    int i = 0;
+    while(separated[i] != '\0'){
+      if((char)separated[i][0] == '>'){
+	output_flag = 1;
+	output = separated[i+1];
+      }
+      if((char)separated[i][0] == '<'){
+	input_flag = 1;
+	input = separated[i+1];
+      }
+      i++;
+    }
+    
     //forking();
     //printf("%s\n", separated[0]);
     //printf("%s\n", separated[1]);
@@ -97,6 +115,17 @@ int main(int argc, char*argv[]) {
       return 1;
     }
     else if(pid == 0){
+      if(input_flag){
+	int fd0 = open(input, 0);
+	dup2(fd0, 0);
+	close(fd0);
+      }
+      if(output_flag){
+	int fd1 = creat(output, 0644);
+	dup2(fd1, 1);
+	close(fd1);
+      }
+      
       execvp(separated[0], separated);
       //printf("Child in Progress\n");
       exit(0);
@@ -105,13 +134,13 @@ int main(int argc, char*argv[]) {
       wait(NULL);
       //printf("Child Complete\n");
     }
-
+    
     if(input_chari == EOF){
       do_exit(); 
     }
 
-    printf("%s@%s:%s>", user, hostname, pwd);
-  }  
+    printf("%s@%s:%s>", user, hostname, pwd); 
+  }
   return 0;
 }
 
