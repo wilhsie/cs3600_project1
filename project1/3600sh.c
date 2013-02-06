@@ -50,8 +50,8 @@ int main(int argc, char*argv[]) {
     int count = 0;
     int input_flag = 0;
     int output_flag = 0;
-    char *input;
-    char *output;
+    char *input = (char *) malloc (32 * sizeof(char));
+    char *output = (char *) malloc (32 * sizeof(char));
     
     // Read input
     while(((input_chari = getchar()) != EOF) && (input_chari != 0) && (input_chari != '\n')){
@@ -93,21 +93,34 @@ int main(int argc, char*argv[]) {
     input_string[count++] = '\0';
 
     separated = separate(input_string);
-      
+   
     // Check the separated string for '<' and '>' characters
     int i = 0;
     while(separated[i] != '\0'){
       if((char)separated[i][0] == '>'){
 	output_flag = 1;
-	output = separated[i+1];
+	if(separated[i+1] != '\0'){
+	  output = separated[i+1];
+	}else{
+	  printf("Error: Invalid syntax.\n");
+	  do_exit();
+	}
       }
       if((char)separated[i][0] == '<'){
 	input_flag = 1;
-	input = separated[i+1];
+	separated[i] = '\0';
+	if(separated[i+1] != '\0'){
+	  input = separated[i+1];
+	}else{
+	  printf("Error: Invalid syntax.\n");
+	  do_exit();
+	}
       }
       i++;
     }
-      
+
+    int fds[2];
+
     //forking();
     //printf("%s\n", separated[0]);
     //printf("%s\n", separated[1]);
@@ -118,16 +131,30 @@ int main(int argc, char*argv[]) {
     }
     else if(pid == 0){
       if(input_flag){
-	int fd0 = open(input, 0);
-	dup2(fd0, 0);
-	close(fd0);
+	fds[0] = open(input, O_RDONLY);
+	if(fds[0] == -1){
+	  printf("Error: Unable to open redirection file.\n");
+	  do_exit();
+	}
+	if(dup2(fds[0], 0) != 0){
+	  printf("Error: Dup2 borked on input\n");
+	  do_exit();
+	}
+	close(fds[0]);
       }
       if(output_flag){
-	int fd1 = creat(output, 0644);
-	dup2(fd1, 1);
-	close(fd1);
+	fds[1] = open(output, O_WRONLY | O_TRUNC | O_CREAT, 0644);
+	if(fds[1] == -1){
+	  printf("Error: Unable to open redirection file.\n");
+	  do_exit();
+	}
+	if(dup2(fds[1], 1) != 1){
+	  printf("Error: Dup2 borked on output :[\n");
+	  do_exit();
+	}
+	close(fds[1]);
       }
- 
+
       execvp(separated[0], separated);
       //printf("Child in Progress\n");
       exit(0);
