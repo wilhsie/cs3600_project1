@@ -38,6 +38,24 @@
 #include "3600fs.h"
 #include "disk.h"
 
+// Simple parsing function to separate filename from directory name
+void filename_parser(char *path, int* acc){
+  int found = 0; // Flag representing location of first '/'.
+  char* temp = path;
+  
+  // Finds how many /s are in string. If only 1 /, path becomes filename.
+  while(*temp){
+    if(*temp == '/'){
+      (*acc)++;
+      if(found == 0){
+	found = 1;
+	path = temp; // Path is now the file name.
+      }
+      temp++;
+    }
+  }
+}
+
 /*
  * Initialize filesystem. Read in file system metadata and initialize
  * memory structures. If there are inconsistencies, now would also be
@@ -192,33 +210,15 @@ static int vfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 static int vfs_create(const char *path, mode_t mode, struct fuse_file_info *fi) {      
   // Next, we want to check the path for errors and extract file name.
 
+  int acc = 0; // Number of '/'s in string
+  int* acc_ptr = &acc;
+  
+  filename_parser(path, acc_ptr);
+
   // TODO: Confirm that '/'s aren't allowed in file names.
-
-  int acc = 0; // Number of '/'s in string.
-  int found = 0; // Flag representing location of first '/'.
-  char* temp = path;
-
-  // Finds how many /s are in string. If only 1 /, path becomes filename.
-  while(*temp){
-   if(*temp == '/'){
-     acc++;
-     if(found == 0){
-       found = 1;
-       path = temp; // Path is now the file name.
-     }
-     temp++;
-   }
-  }
 
   if(acc != 1) // If the path is malformed, we have a bad path and
     return -1; // return the error code, -1.
-
-  // Now, we check our saved (valid) dirents in entries 
-  // for a dup file name.
-  for(int i = 0; i < 100; i++){
-     if(entries[i]
-
-  free(entries);
 
   // Create a temp block and format it to be a directory entry.
   dirent direntblock;
@@ -310,7 +310,6 @@ static int vfs_delete(const char *path)
 
   /* 3600: NOTE THAT THE BLOCKS CORRESPONDING TO THE FILE SHOULD BE MARKED
            AS FREE, AND YOU SHOULD MAKE THEM AVAILABLE TO BE USED WITH OTHER FILES */
-
     return 0;
 }
 
