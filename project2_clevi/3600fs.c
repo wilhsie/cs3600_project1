@@ -83,7 +83,8 @@ static void* vfs_mount(struct fuse_conn_info *conn) {
   if(volblock.disk_id != MAGICNUM){
    fprintf(stderr,"Invalid disk: Invalid magic number.");
    dunconnect();
-  } else if(volblock.mounted == 1){
+  }
+  if(volblock.mounted != 0){
    fprintf(stderr,"Invalid disk: Disk did not unmount correctly.");    
   }
   // TODO: Possibly check dirents for invalid info 
